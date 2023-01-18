@@ -1,0 +1,14 @@
+<body>
+</body>
+<script>
+    var isBlue = false;
+    document.body.addEventListener("click", function(){
+        if (isBlue) {
+            document.body.style.backgroundColor = "white";
+            isBlue = false;
+        } else {
+            document.body.style.backgroundColor = "blue";
+            isBlue = true;
+        }
+    });
+</script>
