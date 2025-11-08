@@ -1,14 +1,537 @@
-<body>
-</body>
-<script>
-    var isBlue = false;
-    document.body.addEventListener("click", function(){
-        if (isBlue) {
-            document.body.style.backgroundColor = "white";
-            isBlue = false;
-        } else {
-            document.body.style.backgroundColor = "blue";
-            isBlue = true;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seal &amp; Bucket</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         }
-    });
-</script>
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            background: radial-gradient(circle at 50% 20%, #b6d9ff 0%, #6bb3ff 35%, #0a4c8f 100%);
+            color: #0d2546;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 1rem 1rem;
+        }
+
+        header h1 {
+            margin: 0 0 0.5rem;
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            letter-spacing: 0.04em;
+        }
+
+        header p {
+            margin: 0.25rem 0;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .scoreboard {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 0.75rem;
+        }
+
+        .game-wrapper {
+            position: relative;
+            width: min(90vw, 640px);
+            aspect-ratio: 16 / 10;
+            box-shadow: 0 20px 45px rgba(6, 35, 65, 0.35);
+            border-radius: 18px;
+            overflow: hidden;
+            background: linear-gradient(#7bc4ff, #59a4e8);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background-image:
+                radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.35), transparent 60%),
+                radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.25), transparent 70%);
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(9, 31, 58, 0.82);
+            color: #f6fbff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2.5rem 2rem;
+            gap: 1rem;
+        }
+
+        .overlay.hidden {
+            display: none;
+        }
+
+        .overlay h2 {
+            margin: 0;
+            font-size: clamp(1.8rem, 3vw, 2.4rem);
+        }
+
+        .overlay p {
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .overlay button {
+            border: none;
+            border-radius: 999px;
+            padding: 0.7rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0d2546;
+            background: linear-gradient(135deg, #9af5ff, #5cdfd2);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            transition: transform 120ms ease, box-shadow 120ms ease;
+        }
+
+        .overlay button:focus-visible {
+            outline: 3px solid rgba(255, 255, 255, 0.85);
+            outline-offset: 3px;
+        }
+
+        .overlay button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .overlay-hint {
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+
+        footer {
+            margin: 1.5rem 0 2.5rem;
+            font-size: 0.95rem;
+            text-align: center;
+            max-width: 540px;
+            line-height: 1.5;
+        }
+
+        kbd {
+            display: inline-block;
+            padding: 0.2rem 0.45rem;
+            border-radius: 4px;
+            border: 1px solid rgba(13, 37, 70, 0.4);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.75);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Seal &amp; Bucket Dash</h1>
+        <p>Help the playful seal scoot around the cove and collect the green bucket!</p>
+        <div class="scoreboard">
+            <div>Score: <span id="score">0</span></div>
+            <div>Best Streak: <span id="best">0</span></div>
+            <div>Time Left: <span id="timer">60</span>s</div>
+        </div>
+    </header>
+
+    <div class="game-wrapper">
+        <canvas id="game" width="640" height="400" aria-label="Seal game"></canvas>
+        <div class="overlay" id="overlay" role="dialog" aria-live="polite">
+            <h2 id="overlay-title">Ready to play?</h2>
+            <p id="overlay-text">
+                Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to swim the seal.
+                Slide into the green bucket to score points and earn more time.
+            </p>
+            <button id="startButton" type="button">Start game</button>
+            <p class="overlay-hint">
+                Press <kbd>Space</kbd>, <kbd>Enter</kbd>, or a movement key to dive in. Press <kbd>R</kbd> anytime to restart.
+            </p>
+        </div>
+    </div>
+
+    <footer>
+        <p>
+            Move with <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys.
+            Press the start button (or tap <kbd>Space</kbd>/<kbd>Enter</kbd>) when you're ready.
+            Nudge the seal toward the bucket to collect it and score points before the timer runs out.
+            Each pickup adds more time and speeds up the seal slightly, so keep the streak going!
+            Hit <kbd>R</kbd> if you want to restart instantly.
+        </p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+        const scoreEl = document.getElementById("score");
+        const bestEl = document.getElementById("best");
+        const timerEl = document.getElementById("timer");
+        const overlay = document.getElementById("overlay");
+        const overlayTitle = document.getElementById("overlay-title");
+        const overlayText = document.getElementById("overlay-text");
+        const overlayHint = overlay.querySelector(".overlay-hint");
+        const startButton = document.getElementById("startButton");
+        const movementKeys = new Set([
+            "ArrowUp",
+            "ArrowDown",
+            "ArrowLeft",
+            "ArrowRight",
+            "w",
+            "a",
+            "s",
+            "d",
+        ]);
+
+        function getMovementKey(key) {
+            if (movementKeys.has(key)) {
+                return key;
+            }
+            const lower = key.toLowerCase();
+            if (movementKeys.has(lower)) {
+                return lower;
+            }
+            return null;
+        }
+
+        const seal = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 26,
+            speed: 3.2,
+            vx: 0,
+            vy: 0,
+            accel: 0.35,
+            maxSpeed: 5.4,
+        };
+
+        const bucket = {
+            x: 100,
+            y: 100,
+            radius: 18,
+        };
+
+        let keys = new Set();
+        let score = 0;
+        let bestScore = 0;
+        let timer = 60;
+        let lastTime = performance.now();
+        let countdownAccumulator = 0;
+        let gameRunning = false;
+        let gameOver = false;
+
+        function setStartOverlayContent() {
+            overlayTitle.textContent = "Ready to play?";
+            overlayText.innerHTML =
+                'Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to swim the seal.<br />' +
+                "Slide into the green bucket to score points and earn extra time.";
+            overlayHint.innerHTML =
+                "Press <kbd>Space</kbd>, <kbd>Enter</kbd>, or a movement key to dive in. Press <kbd>R</kbd> anytime to restart.";
+            startButton.textContent = "Start game";
+        }
+
+        function showStartOverlay() {
+            setStartOverlayContent();
+            overlay.classList.remove("hidden");
+            startButton.focus();
+        }
+
+        function showGameOverOverlay() {
+            const bucketLabel = score === 1 ? "bucket" : "buckets";
+            const bestLine =
+                bestScore > 0
+                    ? `Beat your best streak of <strong>${bestScore}</strong> next time!`
+                    : "You'll set a streak in your next swim!";
+            overlayTitle.textContent = "Time's up!";
+            overlayText.innerHTML =
+                `You collected <strong>${score}</strong> ${bucketLabel} this round.<br />` +
+                bestLine;
+            overlayHint.innerHTML =
+                "Press <kbd>Space</kbd>, <kbd>Enter</kbd>, or <kbd>R</kbd> to play again.";
+            startButton.textContent = "Play again";
+            overlay.classList.remove("hidden");
+            startButton.focus();
+        }
+
+        function resetBucketPosition() {
+            const padding = 40;
+            bucket.x = padding + Math.random() * (canvas.width - padding * 2);
+            bucket.y = padding + Math.random() * (canvas.height - padding * 2);
+        }
+
+        function updateVelocity() {
+            const horizontal = (keys.has("ArrowRight") || keys.has("d")) - (keys.has("ArrowLeft") || keys.has("a"));
+            const vertical = (keys.has("ArrowDown") || keys.has("s")) - (keys.has("ArrowUp") || keys.has("w"));
+
+            seal.vx += horizontal * seal.accel;
+            seal.vy += vertical * seal.accel;
+
+            const speed = Math.hypot(seal.vx, seal.vy);
+            if (speed > seal.maxSpeed) {
+                const scale = seal.maxSpeed / speed;
+                seal.vx *= scale;
+                seal.vy *= scale;
+            }
+
+            if (!horizontal) {
+                seal.vx *= 0.85;
+            }
+            if (!vertical) {
+                seal.vy *= 0.85;
+            }
+        }
+
+        function clampSealToBounds() {
+            const minX = seal.radius;
+            const maxX = canvas.width - seal.radius;
+            const minY = seal.radius;
+            const maxY = canvas.height - seal.radius;
+
+            if (seal.x < minX) {
+                seal.x = minX;
+                seal.vx = Math.abs(seal.vx) * 0.4;
+            } else if (seal.x > maxX) {
+                seal.x = maxX;
+                seal.vx = -Math.abs(seal.vx) * 0.4;
+            }
+
+            if (seal.y < minY) {
+                seal.y = minY;
+                seal.vy = Math.abs(seal.vy) * 0.4;
+            } else if (seal.y > maxY) {
+                seal.y = maxY;
+                seal.vy = -Math.abs(seal.vy) * 0.4;
+            }
+        }
+
+        function drawSeal() {
+            ctx.save();
+            ctx.translate(seal.x, seal.y);
+            ctx.fillStyle = "#edf2f7";
+
+            ctx.beginPath();
+            ctx.ellipse(0, 0, seal.radius + 8, seal.radius, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#cdd6e0";
+            ctx.beginPath();
+            ctx.ellipse(0, 5, seal.radius, seal.radius - 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#3b4a60";
+            ctx.beginPath();
+            ctx.arc(-6, -6, 4, 0, Math.PI * 2);
+            ctx.arc(6, -6, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#263448";
+            ctx.beginPath();
+            ctx.arc(0, 0, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = "#1f2a3a";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 2, 9, 0.2 * Math.PI, 0.8 * Math.PI);
+            ctx.stroke();
+
+            ctx.fillStyle = "#edf2f7";
+            ctx.beginPath();
+            ctx.ellipse(-seal.radius, 12, 12, 6, Math.PI / 6, 0, Math.PI * 2);
+            ctx.ellipse(seal.radius, 12, 12, 6, -Math.PI / 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawBucket() {
+            ctx.save();
+            ctx.translate(bucket.x, bucket.y);
+
+            ctx.fillStyle = "#2f9c2f";
+            ctx.beginPath();
+            ctx.ellipse(0, 0, bucket.radius + 8, bucket.radius + 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#3fbf3f";
+            ctx.beginPath();
+            ctx.rect(-bucket.radius, -bucket.radius, bucket.radius * 2, bucket.radius * 1.6);
+            ctx.fill();
+
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, -bucket.radius - 10, bucket.radius + 6, 0.9 * Math.PI, 0.1 * Math.PI, true);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawBackground() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                const waveY = 60 + i * 60;
+                ctx.ellipse(canvas.width / 2, waveY, canvas.width / 1.5, 20, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function checkBucketPickup() {
+            const dx = seal.x - bucket.x;
+            const dy = seal.y - bucket.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance < seal.radius + bucket.radius - 4) {
+                score += 1;
+                scoreEl.textContent = score;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestEl.textContent = bestScore;
+                }
+                timer = Math.min(timer + 5, 90);
+                timerEl.textContent = timer.toString();
+                seal.speed = Math.min(seal.speed + 0.1, 4.5);
+                seal.maxSpeed = Math.min(seal.maxSpeed + 0.15, 7);
+                resetBucketPosition();
+            }
+        }
+
+        function renderScene() {
+            drawBackground();
+            drawBucket();
+            drawSeal();
+        }
+
+        function update(delta) {
+            if (!gameRunning) {
+                renderScene();
+                return;
+            }
+
+            countdownAccumulator += delta;
+            if (countdownAccumulator >= 1000) {
+                const secondsPassed = Math.floor(countdownAccumulator / 1000);
+                countdownAccumulator -= secondsPassed * 1000;
+                timer = Math.max(0, timer - secondsPassed);
+                timerEl.textContent = timer.toString();
+                if (timer === 0) {
+                    triggerGameOver();
+                    renderScene();
+                    return;
+                }
+            }
+
+            updateVelocity();
+
+            seal.x += seal.vx;
+            seal.y += seal.vy;
+
+            clampSealToBounds();
+            checkBucketPickup();
+
+            renderScene();
+        }
+
+        function gameLoop(timestamp) {
+            const delta = timestamp - lastTime;
+            lastTime = timestamp;
+            update(delta);
+            requestAnimationFrame(gameLoop);
+        }
+
+        function prepareForNewRound() {
+            score = 0;
+            scoreEl.textContent = score;
+            timer = 60;
+            timerEl.textContent = timer;
+            seal.x = canvas.width / 2;
+            seal.y = canvas.height / 2;
+            seal.vx = 0;
+            seal.vy = 0;
+            seal.speed = 3.2;
+            seal.maxSpeed = 5.4;
+            resetBucketPosition();
+            countdownAccumulator = 0;
+            lastTime = performance.now();
+            keys.clear();
+            gameOver = false;
+        }
+
+        function startRound() {
+            prepareForNewRound();
+            gameRunning = true;
+            overlay.classList.add("hidden");
+            setStartOverlayContent();
+            renderScene();
+        }
+
+        function triggerGameOver() {
+            if (gameOver) {
+                return;
+            }
+            gameOver = true;
+            gameRunning = false;
+            showGameOverOverlay();
+        }
+
+        startButton.addEventListener("click", () => {
+            startRound();
+        });
+
+        window.addEventListener("keydown", (event) => {
+            const key = event.key;
+            const lower = key.toLowerCase();
+
+            if (!gameRunning && (key === " " || key === "Spacebar" || key === "Space" || key === "Enter")) {
+                startRound();
+                event.preventDefault();
+                return;
+            }
+
+            if (lower === "r") {
+                startRound();
+                event.preventDefault();
+                return;
+            }
+
+            const movementKey = getMovementKey(key);
+            if (movementKey) {
+                if (!gameRunning) {
+                    startRound();
+                }
+                keys.add(movementKey);
+                event.preventDefault();
+            }
+        });
+
+        window.addEventListener("keyup", (event) => {
+            const movementKey = getMovementKey(event.key);
+            if (movementKey) {
+                keys.delete(movementKey);
+                event.preventDefault();
+            }
+        });
+
+        resetBucketPosition();
+        renderScene();
+        showStartOverlay();
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
