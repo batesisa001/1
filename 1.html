@@ -292,11 +292,31 @@
         </p>
     </footer>
 
+    <script
+        type="importmap"
+        data-three-version="0.154.0"
+        data-comment="Ensure a single Three.js instance across module imports"
+    >
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.154.0/build/three.module.js",
+                "three/examples/jsm/": "https://unpkg.com/three@0.154.0/examples/jsm/"
+            }
+        }
+    </script>
     <script type="module">
-        import * as THREE from "https://unpkg.com/three@0.159.0/build/three.module.js";
-        import { RGBELoader } from "https://unpkg.com/three@0.159.0/examples/jsm/loaders/RGBELoader.js";
-        import { Water } from "https://unpkg.com/three@0.159.0/examples/jsm/objects/Water.js";
-        import { Sky } from "https://unpkg.com/three@0.159.0/examples/jsm/objects/Sky.js";
+        import * as THREE from "three";
+        import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
+        import { Water } from "three/examples/jsm/objects/Water.js";
+        import { Sky } from "three/examples/jsm/objects/Sky.js";
+
+        Object.defineProperty(THREE.Material.prototype, "onBuild", {
+            configurable: true,
+            get() {
+                return () => {};
+            },
+            set() {},
+        });
 
         const canvas = document.getElementById("game");
         const scoreEl = document.getElementById("score");
@@ -399,6 +419,7 @@
             fog: scene.fog !== undefined,
             format: THREE.RGBAFormat,
         });
+        water.material.onBuild = () => {};
         water.rotation.x = -Math.PI / 2;
         water.receiveShadow = true;
         scene.add(water);
