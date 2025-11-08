@@ -143,7 +143,7 @@
 <body>
     <header>
         <h1>Seal &amp; Bucket Dash</h1>
-        <p>Help the playful seal scoot around the cove and collect the green bucket!</p>
+        <p>Help the playful seal glide through the 3D cove and snatch the glowing green bucket!</p>
         <div class="scoreboard">
             <div>Score: <span id="score">0</span></div>
             <div>Best Streak: <span id="best">0</span></div>
@@ -154,10 +154,10 @@
     <div class="game-wrapper">
         <canvas id="game" width="640" height="400" aria-label="Seal game"></canvas>
         <div class="overlay" id="overlay" role="dialog" aria-live="polite">
-            <h2 id="overlay-title">Ready to play?</h2>
+            <h2 id="overlay-title">Ready for a 3D swim?</h2>
             <p id="overlay-text">
-                Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to swim the seal.
-                Slide into the green bucket to score points and earn more time.
+                Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to glide the seal around the lagoon.
+                Swoop through the glowing green bucket to score points and earn extra time.
             </p>
             <button id="startButton" type="button">Start game</button>
             <p class="overlay-hint">
@@ -168,17 +168,18 @@
 
     <footer>
         <p>
-            Move with <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys.
+            Move with <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to steer across the lagoon floor.
             Press the start button (or tap <kbd>Space</kbd>/<kbd>Enter</kbd>) when you're ready.
-            Nudge the seal toward the bucket to collect it and score points before the timer runs out.
-            Each pickup adds more time and speeds up the seal slightly, so keep the streak going!
+            Nudge the seal's snout through the bucket to scoop it up and score before the timer runs out.
+            Each pickup grants extra time and a little more momentum—keep that streak alive!
             Hit <kbd>R</kbd> if you want to restart instantly.
         </p>
     </footer>
 
-    <script>
+    <script type="module">
+        import * as THREE from "https://unpkg.com/three@0.159.0/build/three.module.js";
+
         const canvas = document.getElementById("game");
-        const ctx = canvas.getContext("2d");
         const scoreEl = document.getElementById("score");
         const bestEl = document.getElementById("best");
         const timerEl = document.getElementById("timer");
@@ -187,59 +188,168 @@
         const overlayText = document.getElementById("overlay-text");
         const overlayHint = overlay.querySelector(".overlay-hint");
         const startButton = document.getElementById("startButton");
-        const movementKeys = new Set([
-            "ArrowUp",
-            "ArrowDown",
-            "ArrowLeft",
-            "ArrowRight",
-            "w",
-            "a",
-            "s",
-            "d",
-        ]);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0x62b1ff, 350, 900);
+
+        const camera = new THREE.PerspectiveCamera(50, canvas.width / canvas.height, 0.1, 2000);
+        camera.position.set(0, 160, 280);
+
+        const hemisphereLight = new THREE.HemisphereLight(0xbbe5ff, 0x0b365d, 0.8);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.7);
+        keyLight.position.set(200, 300, 150);
+        const fillLight = new THREE.DirectionalLight(0xa2c9ff, 0.4);
+        fillLight.position.set(-180, 120, -220);
+        scene.add(hemisphereLight, keyLight, fillLight);
+
+        const waterGeometry = new THREE.PlaneGeometry(700, 480, 64, 64);
+        const waterMaterial = new THREE.MeshPhongMaterial({
+            color: 0x4fb6ff,
+            transparent: true,
+            opacity: 0.92,
+            shininess: 80,
+        });
+        const water = new THREE.Mesh(waterGeometry, waterMaterial);
+        water.rotation.x = -Math.PI / 2;
+        scene.add(water);
+
+        const islandGeometry = new THREE.CircleGeometry(240, 64);
+        const islandMaterial = new THREE.MeshPhongMaterial({ color: 0x8bd6ff, transparent: true, opacity: 0.3 });
+        const island = new THREE.Mesh(islandGeometry, islandMaterial);
+        island.rotation.x = -Math.PI / 2;
+        island.position.y = 0.5;
+        scene.add(island);
+
+        const backgroundParticles = new THREE.Group();
+        for (let i = 0; i < 80; i++) {
+            const bubble = new THREE.Mesh(
+                new THREE.SphereGeometry(3 + Math.random() * 3, 12, 12),
+                new THREE.MeshPhongMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 })
+            );
+            bubble.position.set((Math.random() - 0.5) * 700, 10 + Math.random() * 40, (Math.random() - 0.5) * 450);
+            backgroundParticles.add(bubble);
+        }
+        scene.add(backgroundParticles);
+
+        const sealMaterial = new THREE.MeshStandardMaterial({ color: 0xe1e8f0, roughness: 0.35, metalness: 0.05 });
+        const darkerMaterial = new THREE.MeshStandardMaterial({ color: 0xbfc9d6, roughness: 0.4, metalness: 0.05 });
+        const accentMaterial = new THREE.MeshStandardMaterial({ color: 0x2a3b52, roughness: 0.25 });
+        const sealGroup = new THREE.Group();
+
+        const body = new THREE.Mesh(new THREE.SphereGeometry(26, 32, 32), sealMaterial);
+        body.scale.set(1.5, 1, 1);
+        body.position.set(0, 12, 0);
+        sealGroup.add(body);
+
+        const head = new THREE.Mesh(new THREE.SphereGeometry(16, 32, 32), sealMaterial);
+        head.position.set(0, 16, 26);
+        sealGroup.add(head);
+
+        const snout = new THREE.Mesh(new THREE.SphereGeometry(9, 32, 32), darkerMaterial);
+        snout.scale.set(1, 0.7, 0.9);
+        snout.position.set(0, 12, 36);
+        sealGroup.add(snout);
+
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(3.3, 16, 16), accentMaterial);
+        nose.position.set(0, 13, 42);
+        sealGroup.add(nose);
+
+        const leftEye = new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 12), accentMaterial);
+        leftEye.position.set(-5, 16, 34);
+        const rightEye = leftEye.clone();
+        rightEye.position.x = 5;
+        sealGroup.add(leftEye, rightEye);
+
+        const leftFlipper = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 5, 18, 16), sealMaterial);
+        leftFlipper.position.set(-18, 4, -8);
+        leftFlipper.rotation.z = Math.PI / 3;
+        leftFlipper.rotation.x = Math.PI / 4;
+        const rightFlipper = leftFlipper.clone();
+        rightFlipper.position.x = 18;
+        rightFlipper.rotation.z = -Math.PI / 3;
+        sealGroup.add(leftFlipper, rightFlipper);
+
+        const tail = new THREE.Mesh(new THREE.ConeGeometry(9, 20, 24), sealMaterial);
+        tail.rotation.x = -Math.PI / 2.4;
+        tail.position.set(0, 6, -30);
+        sealGroup.add(tail);
+
+        sealGroup.position.set(0, 12, 0);
+        scene.add(sealGroup);
+
+        const bucketMaterial = new THREE.MeshPhongMaterial({ color: 0x30c563, shininess: 70 });
+        const bucketLipMaterial = new THREE.MeshPhongMaterial({ color: 0x8fffa2, emissive: 0x1e7d46, emissiveIntensity: 0.3 });
+        const bucketGroup = new THREE.Group();
+
+        const bucketBody = new THREE.Mesh(new THREE.CylinderGeometry(12, 14, 20, 32, 1, false), bucketMaterial);
+        bucketBody.position.y = 10;
+        bucketGroup.add(bucketBody);
+
+        const bucketRim = new THREE.Mesh(new THREE.TorusGeometry(12.5, 1.5, 12, 64), bucketLipMaterial);
+        bucketRim.rotation.x = Math.PI / 2;
+        bucketRim.position.y = 20;
+        bucketGroup.add(bucketRim);
+
+        const handle = new THREE.Mesh(new THREE.TorusGeometry(14, 1.2, 10, 40, Math.PI), bucketLipMaterial);
+        handle.position.y = 22;
+        handle.rotation.x = Math.PI;
+        bucketGroup.add(handle);
+
+        bucketGroup.position.set(0, 5, -60);
+        scene.add(bucketGroup);
+
+        const playAreaHalfWidth = 260;
+        const playAreaHalfDepth = 170;
+
+        const movementKeys = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"]);
 
         function getMovementKey(key) {
             if (movementKeys.has(key)) {
                 return key;
             }
             const lower = key.toLowerCase();
-            if (movementKeys.has(lower)) {
-                return lower;
-            }
-            return null;
+            return movementKeys.has(lower) ? lower : null;
         }
 
-        const seal = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            radius: 26,
-            speed: 3.2,
-            vx: 0,
-            vy: 0,
-            accel: 0.35,
-            maxSpeed: 5.4,
-        };
-
-        const bucket = {
-            x: 100,
-            y: 100,
-            radius: 18,
+        const sealState = {
+            position: new THREE.Vector3(0, 12, 0),
+            velocity: new THREE.Vector3(),
+            accel: 95,
+            maxSpeed: 180,
+            drag: 0.8,
         };
 
         let keys = new Set();
         let score = 0;
         let bestScore = 0;
         let timer = 60;
-        let lastTime = performance.now();
         let countdownAccumulator = 0;
         let gameRunning = false;
         let gameOver = false;
+        let lastTimestamp = performance.now();
+
+        function resizeRenderer() {
+            const bounds = canvas.getBoundingClientRect();
+            const width = bounds.width * window.devicePixelRatio;
+            const height = bounds.height * window.devicePixelRatio;
+            if (canvas.width !== width || canvas.height !== height) {
+                renderer.setSize(bounds.width, bounds.height, false);
+                camera.aspect = bounds.width / bounds.height;
+                camera.updateProjectionMatrix();
+            }
+        }
+
+        resizeRenderer();
+        window.addEventListener("resize", resizeRenderer);
 
         function setStartOverlayContent() {
-            overlayTitle.textContent = "Ready to play?";
+            overlayTitle.textContent = "Ready for a 3D swim?";
             overlayText.innerHTML =
-                'Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to swim the seal.<br />' +
-                "Slide into the green bucket to score points and earn extra time.";
+                'Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to glide the seal around the lagoon.<br />' +
+                "Swoop through the glowing green bucket to score points and earn extra time.";
             overlayHint.innerHTML =
                 "Press <kbd>Space</kbd>, <kbd>Enter</kbd>, or a movement key to dive in. Press <kbd>R</kbd> anytime to restart.";
             startButton.textContent = "Start game";
@@ -259,8 +369,7 @@
                     : "You'll set a streak in your next swim!";
             overlayTitle.textContent = "Time's up!";
             overlayText.innerHTML =
-                `You collected <strong>${score}</strong> ${bucketLabel} this round.<br />` +
-                bestLine;
+                `You collected <strong>${score}</strong> ${bucketLabel} this round.<br />` + bestLine;
             overlayHint.innerHTML =
                 "Press <kbd>Space</kbd>, <kbd>Enter</kbd>, or <kbd>R</kbd> to play again.";
             startButton.textContent = "Play again";
@@ -268,209 +377,95 @@
             startButton.focus();
         }
 
-        function resetBucketPosition() {
-            const padding = 40;
-            bucket.x = padding + Math.random() * (canvas.width - padding * 2);
-            bucket.y = padding + Math.random() * (canvas.height - padding * 2);
+        function randomInRange(min, max) {
+            return min + Math.random() * (max - min);
         }
 
-        function updateVelocity() {
-            const horizontal = (keys.has("ArrowRight") || keys.has("d")) - (keys.has("ArrowLeft") || keys.has("a"));
-            const vertical = (keys.has("ArrowDown") || keys.has("s")) - (keys.has("ArrowUp") || keys.has("w"));
-
-            seal.vx += horizontal * seal.accel;
-            seal.vy += vertical * seal.accel;
-
-            const speed = Math.hypot(seal.vx, seal.vy);
-            if (speed > seal.maxSpeed) {
-                const scale = seal.maxSpeed / speed;
-                seal.vx *= scale;
-                seal.vy *= scale;
-            }
-
-            if (!horizontal) {
-                seal.vx *= 0.85;
-            }
-            if (!vertical) {
-                seal.vy *= 0.85;
-            }
+        function resetBucketPosition() {
+            const padding = 30;
+            const x = randomInRange(-playAreaHalfWidth + padding, playAreaHalfWidth - padding);
+            const z = randomInRange(-playAreaHalfDepth + padding, playAreaHalfDepth - padding);
+            bucketGroup.position.set(x, bucketGroup.position.y, z);
         }
 
         function clampSealToBounds() {
-            const minX = seal.radius;
-            const maxX = canvas.width - seal.radius;
-            const minY = seal.radius;
-            const maxY = canvas.height - seal.radius;
+            sealState.position.x = Math.min(
+                playAreaHalfWidth,
+                Math.max(-playAreaHalfWidth, sealState.position.x)
+            );
+            sealState.position.z = Math.min(
+                playAreaHalfDepth,
+                Math.max(-playAreaHalfDepth, sealState.position.z)
+            );
+        }
 
-            if (seal.x < minX) {
-                seal.x = minX;
-                seal.vx = Math.abs(seal.vx) * 0.4;
-            } else if (seal.x > maxX) {
-                seal.x = maxX;
-                seal.vx = -Math.abs(seal.vx) * 0.4;
+        function updateMovement(deltaSeconds, elapsedSeconds) {
+            const accelVector = new THREE.Vector3();
+            const right = keys.has("ArrowRight") || keys.has("d");
+            const left = keys.has("ArrowLeft") || keys.has("a");
+            const forward = keys.has("ArrowUp") || keys.has("w");
+            const backward = keys.has("ArrowDown") || keys.has("s");
+
+            if (right) accelVector.x += 1;
+            if (left) accelVector.x -= 1;
+            if (forward) accelVector.z -= 1;
+            if (backward) accelVector.z += 1;
+
+            if (accelVector.lengthSq() > 0) {
+                accelVector.normalize().multiplyScalar(sealState.accel * deltaSeconds);
+                sealState.velocity.add(accelVector);
             }
 
-            if (seal.y < minY) {
-                seal.y = minY;
-                seal.vy = Math.abs(seal.vy) * 0.4;
-            } else if (seal.y > maxY) {
-                seal.y = maxY;
-                seal.vy = -Math.abs(seal.vy) * 0.4;
+            const dragFactor = Math.pow(sealState.drag, deltaSeconds * 60);
+            sealState.velocity.multiplyScalar(dragFactor);
+
+            const speed = sealState.velocity.length();
+            const maxSpeed = sealState.maxSpeed * (1 + score * 0.06);
+            if (speed > maxSpeed) {
+                sealState.velocity.multiplyScalar(maxSpeed / speed);
             }
-        }
 
-        function drawSeal() {
-            ctx.save();
-            ctx.translate(seal.x, seal.y);
-            ctx.fillStyle = "#edf2f7";
+            sealState.position.addScaledVector(sealState.velocity, deltaSeconds);
+            clampSealToBounds();
+            sealGroup.position.set(
+                sealState.position.x,
+                12 + Math.sin(elapsedSeconds * 3) * 1.2,
+                sealState.position.z
+            );
 
-            ctx.beginPath();
-            ctx.ellipse(0, 0, seal.radius + 8, seal.radius, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#cdd6e0";
-            ctx.beginPath();
-            ctx.ellipse(0, 5, seal.radius, seal.radius - 4, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#3b4a60";
-            ctx.beginPath();
-            ctx.arc(-6, -6, 4, 0, Math.PI * 2);
-            ctx.arc(6, -6, 4, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#263448";
-            ctx.beginPath();
-            ctx.arc(0, 0, 6, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.strokeStyle = "#1f2a3a";
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(0, 2, 9, 0.2 * Math.PI, 0.8 * Math.PI);
-            ctx.stroke();
-
-            ctx.fillStyle = "#edf2f7";
-            ctx.beginPath();
-            ctx.ellipse(-seal.radius, 12, 12, 6, Math.PI / 6, 0, Math.PI * 2);
-            ctx.ellipse(seal.radius, 12, 12, 6, -Math.PI / 6, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
-        }
-
-        function drawBucket() {
-            ctx.save();
-            ctx.translate(bucket.x, bucket.y);
-
-            ctx.fillStyle = "#2f9c2f";
-            ctx.beginPath();
-            ctx.ellipse(0, 0, bucket.radius + 8, bucket.radius + 12, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#3fbf3f";
-            ctx.beginPath();
-            ctx.rect(-bucket.radius, -bucket.radius, bucket.radius * 2, bucket.radius * 1.6);
-            ctx.fill();
-
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(0, -bucket.radius - 10, bucket.radius + 6, 0.9 * Math.PI, 0.1 * Math.PI, true);
-            ctx.stroke();
-
-            ctx.restore();
-        }
-
-        function drawBackground() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-            for (let i = 0; i < 5; i++) {
-                ctx.beginPath();
-                const waveY = 60 + i * 60;
-                ctx.ellipse(canvas.width / 2, waveY, canvas.width / 1.5, 20, 0, 0, Math.PI * 2);
-                ctx.fill();
+            if (sealState.velocity.lengthSq() > 10) {
+                sealGroup.rotation.y = Math.atan2(sealState.velocity.x, sealState.velocity.z);
             }
         }
 
         function checkBucketPickup() {
-            const dx = seal.x - bucket.x;
-            const dy = seal.y - bucket.y;
-            const distance = Math.hypot(dx, dy);
-            if (distance < seal.radius + bucket.radius - 4) {
+            const distance = sealGroup.position.distanceTo(bucketGroup.position);
+            const pickupRadius = 34;
+            if (distance < pickupRadius) {
                 score += 1;
-                scoreEl.textContent = score;
+                scoreEl.textContent = score.toString();
                 if (score > bestScore) {
                     bestScore = score;
-                    bestEl.textContent = bestScore;
+                    bestEl.textContent = bestScore.toString();
                 }
                 timer = Math.min(timer + 5, 90);
                 timerEl.textContent = timer.toString();
-                seal.speed = Math.min(seal.speed + 0.1, 4.5);
-                seal.maxSpeed = Math.min(seal.maxSpeed + 0.15, 7);
                 resetBucketPosition();
             }
         }
 
-        function renderScene() {
-            drawBackground();
-            drawBucket();
-            drawSeal();
-        }
-
-        function update(delta) {
-            if (!gameRunning) {
-                renderScene();
-                return;
-            }
-
-            countdownAccumulator += delta;
-            if (countdownAccumulator >= 1000) {
-                const secondsPassed = Math.floor(countdownAccumulator / 1000);
-                countdownAccumulator -= secondsPassed * 1000;
-                timer = Math.max(0, timer - secondsPassed);
-                timerEl.textContent = timer.toString();
-                if (timer === 0) {
-                    triggerGameOver();
-                    renderScene();
-                    return;
-                }
-            }
-
-            updateVelocity();
-
-            seal.x += seal.vx;
-            seal.y += seal.vy;
-
-            clampSealToBounds();
-            checkBucketPickup();
-
-            renderScene();
-        }
-
-        function gameLoop(timestamp) {
-            const delta = timestamp - lastTime;
-            lastTime = timestamp;
-            update(delta);
-            requestAnimationFrame(gameLoop);
-        }
-
         function prepareForNewRound() {
             score = 0;
-            scoreEl.textContent = score;
+            scoreEl.textContent = score.toString();
             timer = 60;
-            timerEl.textContent = timer;
-            seal.x = canvas.width / 2;
-            seal.y = canvas.height / 2;
-            seal.vx = 0;
-            seal.vy = 0;
-            seal.speed = 3.2;
-            seal.maxSpeed = 5.4;
+            timerEl.textContent = timer.toString();
+            sealState.position.set(0, 12, 0);
+            sealState.velocity.set(0, 0, 0);
             resetBucketPosition();
             countdownAccumulator = 0;
-            lastTime = performance.now();
             keys.clear();
             gameOver = false;
+            lastTimestamp = performance.now();
         }
 
         function startRound() {
@@ -478,15 +473,14 @@
             gameRunning = true;
             overlay.classList.add("hidden");
             setStartOverlayContent();
-            renderScene();
         }
 
         function triggerGameOver() {
             if (gameOver) {
                 return;
             }
-            gameOver = true;
             gameRunning = false;
+            gameOver = true;
             showGameOverOverlay();
         }
 
@@ -528,10 +522,55 @@
             }
         });
 
+        function updateTimer(deltaMs) {
+            countdownAccumulator += deltaMs;
+            if (countdownAccumulator >= 1000) {
+                const secondsPassed = Math.floor(countdownAccumulator / 1000);
+                countdownAccumulator -= secondsPassed * 1000;
+                timer = Math.max(0, timer - secondsPassed);
+                timerEl.textContent = timer.toString();
+                if (timer === 0) {
+                    triggerGameOver();
+                }
+            }
+        }
+
+        function animate(timestamp) {
+            requestAnimationFrame(animate);
+
+            resizeRenderer();
+
+            const deltaMs = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+            const deltaSeconds = Math.min(deltaMs / 1000, 0.1);
+            const elapsedSeconds = timestamp * 0.001;
+
+            backgroundParticles.children.forEach((bubble, index) => {
+                bubble.position.y = 10 + Math.sin(timestamp * 0.001 + index) * 8;
+                bubble.position.x += Math.sin(timestamp * 0.0005 + index) * 0.1;
+            });
+
+            if (gameRunning) {
+                updateTimer(deltaMs);
+                updateMovement(deltaSeconds, elapsedSeconds);
+                checkBucketPickup();
+            } else {
+                sealGroup.position.set(
+                    sealState.position.x,
+                    12 + Math.sin(elapsedSeconds * 3) * 1.2,
+                    sealState.position.z
+                );
+            }
+
+            bucketGroup.position.y = 8 + Math.sin(elapsedSeconds * 2) * 1.8;
+
+            camera.lookAt(sealGroup.position.x, 0, sealGroup.position.z);
+            renderer.render(scene, camera);
+        }
+
         resetBucketPosition();
-        renderScene();
         showStartOverlay();
-        requestAnimationFrame(gameLoop);
+        requestAnimationFrame(animate);
     </script>
 </body>
 </html>
