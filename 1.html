@@ -3,11 +3,22 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Seal &amp; Bucket</title>
+    <title>Seal &amp; Bucket: Crystal Cove</title>
+    <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+    />
     <style>
         :root {
             color-scheme: light;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            font-family: "Poppins", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            --glass-bg: rgba(12, 34, 63, 0.32);
+            --glass-border: rgba(173, 214, 255, 0.4);
+            --accent: #4bf1c6;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -17,167 +28,275 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            background: radial-gradient(circle at 50% 20%, #b6d9ff 0%, #6bb3ff 35%, #0a4c8f 100%);
-            color: #0d2546;
+            gap: 1.75rem;
+            padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1rem, 3vw, 2rem) 3rem;
+            background: radial-gradient(circle at 50% 15%, #9fd5ff 0%, #3b76d8 40%, #041a36 100%);
+            color: #e8f6ff;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 20% 25%, rgba(255, 255, 255, 0.18), transparent 55%),
+                radial-gradient(circle at 80% 15%, rgba(75, 241, 198, 0.12), transparent 50%),
+                linear-gradient(180deg, rgba(3, 17, 36, 0.2) 0%, rgba(3, 17, 36, 0.75) 100%);
+            z-index: -1;
         }
 
         header {
             text-align: center;
-            padding: 2rem 1rem 1rem;
+            max-width: 720px;
         }
 
         header h1 {
-            margin: 0 0 0.5rem;
-            font-size: clamp(2rem, 4vw, 2.8rem);
-            letter-spacing: 0.04em;
+            margin: 0;
+            font-size: clamp(2.35rem, 5vw, 3.6rem);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            text-shadow: 0 18px 35px rgba(9, 24, 46, 0.45);
         }
 
         header p {
-            margin: 0.25rem 0;
-            font-size: 1rem;
-            opacity: 0.9;
+            margin: 0.65rem 0 0;
+            font-size: clamp(1rem, 2.4vw, 1.2rem);
+            opacity: 0.88;
+            line-height: 1.65;
         }
 
-        .scoreboard {
+        .hud {
             display: flex;
-            gap: 1.5rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-top: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: clamp(0.75rem, 2vw, 1.4rem);
         }
 
-        .game-wrapper {
-            position: relative;
-            width: min(90vw, 640px);
-            aspect-ratio: 16 / 10;
-            box-shadow: 0 20px 45px rgba(6, 35, 65, 0.35);
+        .hud-panel {
+            min-width: 160px;
+            padding: 0.8rem 1.4rem;
             border-radius: 18px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(22px) saturate(140%);
+            box-shadow: 0 18px 38px rgba(5, 18, 35, 0.45);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.15rem;
+        }
+
+        .hud-panel span {
+            display: block;
+        }
+
+        .hud-panel .label {
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.72;
+        }
+
+        .hud-panel .value {
+            font-size: clamp(1.8rem, 3.6vw, 2.2rem);
+            font-weight: 600;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(75, 241, 198, 0.45);
+        }
+
+        .game-shell {
+            position: relative;
+            width: min(92vw, 880px);
+            aspect-ratio: 16 / 9;
+            border-radius: 28px;
             overflow: hidden;
-            background: linear-gradient(#7bc4ff, #59a4e8);
+            box-shadow: 0 35px 120px rgba(3, 16, 34, 0.78);
+            border: 1px solid rgba(152, 201, 255, 0.18);
         }
 
         canvas {
             width: 100%;
             height: 100%;
             display: block;
-            background-image:
-                radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.35), transparent 60%),
-                radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.25), transparent 70%);
+            background: radial-gradient(circle at 50% 40%, rgba(74, 148, 212, 0.5), rgba(3, 25, 46, 0.95));
         }
 
         .overlay {
             position: absolute;
             inset: 0;
-            background: rgba(9, 31, 58, 0.82);
-            color: #f6fbff;
+            background: rgba(4, 18, 35, 0.85);
+            color: #f2fbff;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 2.5rem 2rem;
-            gap: 1rem;
+            padding: clamp(1.8rem, 4vw, 2.8rem);
+            gap: 1.4rem;
+            z-index: 4;
         }
 
         .overlay.hidden {
-            display: none;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 220ms ease;
         }
 
         .overlay h2 {
             margin: 0;
-            font-size: clamp(1.8rem, 3vw, 2.4rem);
+            font-size: clamp(1.9rem, 3.2vw, 2.5rem);
         }
 
         .overlay p {
             margin: 0;
-            line-height: 1.6;
+            font-size: clamp(1rem, 2.4vw, 1.15rem);
+            line-height: 1.7;
+            opacity: 0.92;
         }
 
         .overlay button {
             border: none;
             border-radius: 999px;
-            padding: 0.7rem 2.5rem;
-            font-size: 1rem;
-            font-weight: 700;
-            color: #0d2546;
-            background: linear-gradient(135deg, #9af5ff, #5cdfd2);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            padding: 0.85rem 3.1rem;
+            font-size: clamp(1rem, 2vw, 1.1rem);
+            font-weight: 600;
+            color: #021326;
+            background: linear-gradient(135deg, #7dfff0 0%, #4bf1c6 100%);
+            box-shadow: 0 18px 45px rgba(4, 0, 34, 0.45);
             cursor: pointer;
-            transition: transform 120ms ease, box-shadow 120ms ease;
-        }
-
-        .overlay button:focus-visible {
-            outline: 3px solid rgba(255, 255, 255, 0.85);
-            outline-offset: 3px;
+            transition: transform 140ms ease, box-shadow 140ms ease;
         }
 
         .overlay button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 22px 55px rgba(4, 0, 34, 0.55);
         }
 
-        .overlay-hint {
-            font-size: 0.9rem;
-            opacity: 0.85;
+        .overlay button:focus-visible {
+            outline: 3px solid rgba(255, 255, 255, 0.8);
+            outline-offset: 3px;
         }
 
-        footer {
-            margin: 1.5rem 0 2.5rem;
+        .overlay .hint {
             font-size: 0.95rem;
-            text-align: center;
-            max-width: 540px;
-            line-height: 1.5;
+            opacity: 0.7;
         }
 
         kbd {
-            display: inline-block;
-            padding: 0.2rem 0.45rem;
-            border-radius: 4px;
-            border: 1px solid rgba(13, 37, 70, 0.4);
-            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
-            background: rgba(255, 255, 255, 0.75);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            border: 1px solid rgba(230, 248, 255, 0.4);
+            background: rgba(255, 255, 255, 0.85);
+            color: #061129;
             font-weight: 600;
+            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6), 0 2px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .status-toast {
+            position: absolute;
+            left: 50%;
+            bottom: clamp(1.4rem, 3vw, 2.2rem);
+            transform: translate(-50%, 120%);
+            padding: 0.65rem 1.8rem;
+            border-radius: 999px;
+            background: rgba(7, 21, 36, 0.85);
+            border: 1px solid rgba(134, 205, 255, 0.35);
+            color: #d7f7ff;
+            font-size: 0.95rem;
+            letter-spacing: 0.02em;
+            box-shadow: 0 14px 30px rgba(2, 12, 25, 0.55);
+            opacity: 0;
+            transition: transform 280ms ease, opacity 280ms ease;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .status-toast.show {
+            transform: translate(-50%, 0%);
+            opacity: 1;
+        }
+
+        footer {
+            max-width: 760px;
+            text-align: center;
+            font-size: clamp(0.92rem, 2vw, 1.05rem);
+            line-height: 1.75;
+            color: rgba(229, 244, 255, 0.78);
+        }
+
+        footer strong {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-top: 1.6rem;
+            }
+
+            .game-shell {
+                border-radius: 22px;
+            }
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Seal &amp; Bucket Dash</h1>
-        <p>Help the playful seal glide through the 3D cove and snatch the glowing green bucket!</p>
-        <div class="scoreboard">
-            <div>Score: <span id="score">0</span></div>
-            <div>Best Streak: <span id="best">0</span></div>
-            <div>Time Left: <span id="timer">60</span>s</div>
-        </div>
+        <h1>Seal &amp; Bucket: Crystal Cove</h1>
+        <p>
+            Glide through a sparkling undersea world, chase the radiant bucket, and stretch your streak before the
+            clock winds down.
+        </p>
     </header>
 
-    <div class="game-wrapper">
-        <canvas id="game" width="640" height="400" aria-label="Seal game"></canvas>
+    <div class="hud" role="group" aria-label="Game status">
+        <div class="hud-panel" aria-live="polite">
+            <span class="label">Score</span>
+            <span class="value" id="score">0</span>
+        </div>
+        <div class="hud-panel" aria-live="polite">
+            <span class="label">Best streak</span>
+            <span class="value" id="best">0</span>
+        </div>
+        <div class="hud-panel" aria-live="polite">
+            <span class="label">Time left</span>
+            <span class="value" id="timer">60</span>
+        </div>
+    </div>
+
+    <div class="game-shell">
+        <canvas id="game" width="1280" height="720" aria-label="Seal bucket game"></canvas>
         <div class="overlay" id="overlay" role="dialog" aria-live="polite">
-            <h2 id="overlay-title">Ready for a 3D swim?</h2>
+            <h2 id="overlay-title">Dive when you're ready</h2>
             <p id="overlay-text">
-                Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to glide the seal around the lagoon.
-                Swoop through the glowing green bucket to score points and earn extra time.
+                Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to swim. Hold <kbd>Shift</kbd> for a
+                smooth dash. Glide through the luminous bucket to score and earn more time.
             </p>
-            <button id="startButton" type="button">Start game</button>
-            <p class="overlay-hint">
-                Press <kbd>Space</kbd>, <kbd>Enter</kbd>, or a movement key to dive in. Press <kbd>R</kbd> anytime to restart.
+            <button id="startButton" type="button">Start the dive</button>
+            <p class="hint" id="overlay-hint">
+                Tap <kbd>Space</kbd>, <kbd>Enter</kbd>, or any movement key to begin. Press <kbd>R</kbd> anytime for a fresh run.
             </p>
         </div>
+        <div class="status-toast" id="status">Glide through the bucket to add bonus time!</div>
     </div>
 
     <footer>
         <p>
-            Move with <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to steer across the lagoon floor.
-            Press the start button (or tap <kbd>Space</kbd>/<kbd>Enter</kbd>) when you're ready.
-            Nudge the seal's snout through the bucket to scoop it up and score before the timer runs out.
-            Each pickup grants extra time and a little more momentum—keep that streak alive!
-            Hit <kbd>R</kbd> if you want to restart instantly.
+            Navigate with the keyboard to trace elegant curves around the seafloor. The camera hugs your movement for a
+            cinematic view—just keep your snout aimed at that glowing <strong>emerald bucket</strong> to stack up points and
+            precious seconds. Need another go? Hit <kbd>R</kbd> and surge right back into the cove.
         </p>
     </footer>
 
     <script type="module">
         import * as THREE from "https://unpkg.com/three@0.159.0/build/three.module.js";
+        import { RGBELoader } from "https://unpkg.com/three@0.159.0/examples/jsm/loaders/RGBELoader.js";
+        import { Water } from "https://unpkg.com/three@0.159.0/examples/jsm/objects/Water.js";
+        import { Sky } from "https://unpkg.com/three@0.159.0/examples/jsm/objects/Sky.js";
 
         const canvas = document.getElementById("game");
         const scoreEl = document.getElementById("score");
@@ -186,141 +305,360 @@
         const overlay = document.getElementById("overlay");
         const overlayTitle = document.getElementById("overlay-title");
         const overlayText = document.getElementById("overlay-text");
-        const overlayHint = overlay.querySelector(".overlay-hint");
+        const overlayHint = document.getElementById("overlay-hint");
         const startButton = document.getElementById("startButton");
+        const statusToast = document.getElementById("status");
 
         const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.15;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setClearColor(0x031529, 1);
 
         const scene = new THREE.Scene();
-        scene.fog = new THREE.Fog(0x62b1ff, 350, 900);
+        scene.fog = new THREE.FogExp2(0x0f305c, 0.0018);
 
-        const camera = new THREE.PerspectiveCamera(50, canvas.width / canvas.height, 0.1, 2000);
-        camera.position.set(0, 160, 280);
+        const camera = new THREE.PerspectiveCamera(55, canvas.clientWidth / canvas.clientHeight, 0.1, 2000);
+        camera.position.set(0, 65, 160);
 
-        const hemisphereLight = new THREE.HemisphereLight(0xbbe5ff, 0x0b365d, 0.8);
-        const keyLight = new THREE.DirectionalLight(0xffffff, 0.7);
-        keyLight.position.set(200, 300, 150);
-        const fillLight = new THREE.DirectionalLight(0xa2c9ff, 0.4);
-        fillLight.position.set(-180, 120, -220);
-        scene.add(hemisphereLight, keyLight, fillLight);
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        pmremGenerator.compileEquirectangularShader();
 
-        const waterGeometry = new THREE.PlaneGeometry(700, 480, 64, 64);
-        const waterMaterial = new THREE.MeshPhongMaterial({
-            color: 0x4fb6ff,
-            transparent: true,
-            opacity: 0.92,
-            shininess: 80,
+        new RGBELoader().load(
+            "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/ocean_sunset_1k.hdr",
+            (texture) => {
+                const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+                scene.environment = envMap;
+                texture.dispose();
+                pmremGenerator.dispose();
+            },
+            undefined,
+            () => {
+                pmremGenerator.dispose();
+            }
+        );
+
+        const sky = new Sky();
+        sky.scale.setScalar(4500);
+        scene.add(sky);
+        const skyUniforms = sky.material.uniforms;
+        skyUniforms["turbidity"].value = 8;
+        skyUniforms["rayleigh"].value = 3;
+        skyUniforms["mieCoefficient"].value = 0.008;
+        skyUniforms["mieDirectionalG"].value = 0.85;
+        const sunVector = new THREE.Vector3();
+        function updateSun() {
+            const phi = THREE.MathUtils.degToRad(80);
+            const theta = THREE.MathUtils.degToRad(140);
+            sunVector.setFromSphericalCoords(1, Math.PI - phi, theta);
+            sky.material.uniforms["sunPosition"].value.copy(sunVector);
+        }
+        updateSun();
+
+        const ambient = new THREE.AmbientLight(0x7bb3ff, 0.5);
+        scene.add(ambient);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.35);
+        sunLight.position.set(160, 210, -120);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.set(2048, 2048);
+        sunLight.shadow.camera.near = 50;
+        sunLight.shadow.camera.far = 600;
+        sunLight.shadow.camera.left = -320;
+        sunLight.shadow.camera.right = 320;
+        sunLight.shadow.camera.top = 280;
+        sunLight.shadow.camera.bottom = -280;
+        scene.add(sunLight);
+
+        const fillLight = new THREE.DirectionalLight(0x64a7ff, 0.55);
+        fillLight.position.set(-180, 120, 200);
+        scene.add(fillLight);
+
+        const textureLoader = new THREE.TextureLoader();
+
+        const waterNormals = textureLoader.load(
+            "https://threejs.org/examples/textures/waternormals.jpg",
+            (texture) => {
+                texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            }
+        );
+
+        const waterGeometry = new THREE.CircleGeometry(580, 128);
+        const water = new Water(waterGeometry, {
+            textureWidth: 1024,
+            textureHeight: 1024,
+            waterNormals,
+            sunDirection: sunLight.position.clone().normalize(),
+            sunColor: 0xffffff,
+            waterColor: 0x0b3d6a,
+            distortionScale: 3.3,
+            fog: scene.fog !== undefined,
+            format: THREE.RGBAFormat,
         });
-        const water = new THREE.Mesh(waterGeometry, waterMaterial);
         water.rotation.x = -Math.PI / 2;
+        water.receiveShadow = true;
         scene.add(water);
 
-        const islandGeometry = new THREE.CircleGeometry(240, 64);
-        const islandMaterial = new THREE.MeshPhongMaterial({ color: 0x8bd6ff, transparent: true, opacity: 0.3 });
-        const island = new THREE.Mesh(islandGeometry, islandMaterial);
-        island.rotation.x = -Math.PI / 2;
-        island.position.y = 0.5;
-        scene.add(island);
+        const floorTexture = textureLoader.load(
+            "https://threejs.org/examples/textures/sand/Sand_001_COLOR.jpg",
+            (texture) => {
+                texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(6, 6);
+            }
+        );
+        const floorNormal = textureLoader.load(
+            "https://threejs.org/examples/textures/sand/Sand_001_NRM.jpg",
+            (texture) => {
+                texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(6, 6);
+            }
+        );
 
-        const backgroundParticles = new THREE.Group();
-        for (let i = 0; i < 80; i++) {
-            const bubble = new THREE.Mesh(
-                new THREE.SphereGeometry(3 + Math.random() * 3, 12, 12),
-                new THREE.MeshPhongMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 })
-            );
-            bubble.position.set((Math.random() - 0.5) * 700, 10 + Math.random() * 40, (Math.random() - 0.5) * 450);
-            backgroundParticles.add(bubble);
+        const lagoonFloor = new THREE.Mesh(
+            new THREE.CircleGeometry(560, 96),
+            new THREE.MeshStandardMaterial({
+                map: floorTexture,
+                normalMap: floorNormal,
+                color: 0xf6e8c4,
+                roughness: 0.85,
+                metalness: 0.03,
+                normalScale: new THREE.Vector2(0.7, 0.7),
+            })
+        );
+        lagoonFloor.rotation.x = -Math.PI / 2;
+        lagoonFloor.position.y = -12;
+        lagoonFloor.receiveShadow = true;
+        scene.add(lagoonFloor);
+
+        const reefGroup = new THREE.Group();
+        const reefMaterial = new THREE.MeshStandardMaterial({ color: 0x445a73, roughness: 0.9, metalness: 0.02 });
+        const seaweedMaterial = new THREE.MeshStandardMaterial({ color: 0x1f8761, roughness: 0.7 });
+        for (let i = 0; i < 26; i++) {
+            const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(8 + Math.random() * 12, 1), reefMaterial);
+            rock.castShadow = true;
+            rock.receiveShadow = true;
+            const radius = 140 + Math.random() * 180;
+            const angle = Math.random() * Math.PI * 2;
+            rock.position.set(Math.cos(angle) * radius, -10 - Math.random() * 4, Math.sin(angle) * radius);
+            rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+            const scale = 0.9 + Math.random() * 1.8;
+            rock.scale.setScalar(scale);
+            reefGroup.add(rock);
+
+            if (Math.random() > 0.4) {
+                const kelpHeight = 18 + Math.random() * 28;
+                const kelp = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1.3, 3.6, kelpHeight, 8, 1, true),
+                    seaweedMaterial
+                );
+                kelp.position.copy(rock.position);
+                kelp.position.y += kelpHeight / 2 - 10;
+                kelp.rotation.y = Math.random() * Math.PI;
+                kelp.castShadow = true;
+                reefGroup.add(kelp);
+            }
         }
-        scene.add(backgroundParticles);
+        scene.add(reefGroup);
 
-        const sealMaterial = new THREE.MeshStandardMaterial({ color: 0xe1e8f0, roughness: 0.35, metalness: 0.05 });
-        const darkerMaterial = new THREE.MeshStandardMaterial({ color: 0xbfc9d6, roughness: 0.4, metalness: 0.05 });
-        const accentMaterial = new THREE.MeshStandardMaterial({ color: 0x2a3b52, roughness: 0.25 });
+        const bubbleGeometry = new THREE.SphereGeometry(1, 12, 12);
+        const bubbleMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.35,
+            roughness: 0,
+            transmission: 0.98,
+            thickness: 0.2,
+        });
+        const bubbleGroup = new THREE.Group();
+        for (let i = 0; i < 120; i++) {
+            const bubble = new THREE.Mesh(bubbleGeometry, bubbleMaterial.clone());
+            bubble.position.set((Math.random() - 0.5) * 640, -6 + Math.random() * 120, (Math.random() - 0.5) * 460);
+            bubble.scale.setScalar(0.6 + Math.random() * 1.8);
+            bubbleGroup.add(bubble);
+        }
+        scene.add(bubbleGroup);
+
+        const sealMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xdfe7f0,
+            roughness: 0.35,
+            metalness: 0.08,
+            clearcoat: 0.35,
+            clearcoatRoughness: 0.18,
+            reflectivity: 0.6,
+        });
+        const accentMaterial = new THREE.MeshPhysicalMaterial({ color: 0x1f2d3f, roughness: 0.22, metalness: 0.1 });
+        const muzzleMaterial = new THREE.MeshPhysicalMaterial({ color: 0xb9c6d8, roughness: 0.28, metalness: 0.05 });
+
         const sealGroup = new THREE.Group();
 
-        const body = new THREE.Mesh(new THREE.SphereGeometry(26, 32, 32), sealMaterial);
-        body.scale.set(1.5, 1, 1);
-        body.position.set(0, 12, 0);
+        const body = new THREE.Mesh(new THREE.CapsuleGeometry(28, 34, 18, 36), sealMaterial);
+        body.rotation.z = Math.PI / 2;
+        body.castShadow = true;
         sealGroup.add(body);
 
-        const head = new THREE.Mesh(new THREE.SphereGeometry(16, 32, 32), sealMaterial);
-        head.position.set(0, 16, 26);
+        const chest = new THREE.Mesh(new THREE.SphereGeometry(18, 32, 32), sealMaterial);
+        chest.position.set(0, 12, 28);
+        chest.castShadow = true;
+        sealGroup.add(chest);
+
+        const head = new THREE.Mesh(new THREE.SphereGeometry(15, 32, 32), sealMaterial);
+        head.position.set(0, 16, 45);
+        head.castShadow = true;
         sealGroup.add(head);
 
-        const snout = new THREE.Mesh(new THREE.SphereGeometry(9, 32, 32), darkerMaterial);
-        snout.scale.set(1, 0.7, 0.9);
-        snout.position.set(0, 12, 36);
+        const snout = new THREE.Mesh(new THREE.SphereGeometry(9, 32, 32), muzzleMaterial);
+        snout.scale.set(1, 0.7, 1);
+        snout.position.set(0, 10.5, 56);
+        snout.castShadow = true;
         sealGroup.add(snout);
 
-        const nose = new THREE.Mesh(new THREE.SphereGeometry(3.3, 16, 16), accentMaterial);
-        nose.position.set(0, 13, 42);
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(3.4, 16, 16), accentMaterial);
+        nose.position.set(0, 11.5, 63);
         sealGroup.add(nose);
 
-        const leftEye = new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 12), accentMaterial);
-        leftEye.position.set(-5, 16, 34);
+        const eyeGeometry = new THREE.SphereGeometry(2.5, 18, 18);
+        const leftEye = new THREE.Mesh(eyeGeometry, accentMaterial);
+        leftEye.position.set(-5.2, 16.5, 51);
         const rightEye = leftEye.clone();
-        rightEye.position.x = 5;
+        rightEye.position.x = 5.2;
         sealGroup.add(leftEye, rightEye);
 
-        const leftFlipper = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 5, 18, 16), sealMaterial);
-        leftFlipper.position.set(-18, 4, -8);
-        leftFlipper.rotation.z = Math.PI / 3;
-        leftFlipper.rotation.x = Math.PI / 4;
-        const rightFlipper = leftFlipper.clone();
-        rightFlipper.position.x = 18;
-        rightFlipper.rotation.z = -Math.PI / 3;
-        sealGroup.add(leftFlipper, rightFlipper);
+        const whiskerMaterial = new THREE.MeshBasicMaterial({ color: 0xf8fbff });
+        const whiskerGeometry = new THREE.CylinderGeometry(0.3, 0.3, 16, 6);
+        for (let i = 0; i < 6; i++) {
+            const whisker = new THREE.Mesh(whiskerGeometry, whiskerMaterial);
+            whisker.position.set(i < 3 ? -4 : 4, 11 - (i % 3) * 1.5, 60);
+            whisker.rotation.z = i < 3 ? Math.PI / 2.4 : -Math.PI / 2.4;
+            whisker.rotation.y = (i % 3) * 0.08 + 0.12;
+            sealGroup.add(whisker);
+        }
 
-        const tail = new THREE.Mesh(new THREE.ConeGeometry(9, 20, 24), sealMaterial);
-        tail.rotation.x = -Math.PI / 2.4;
-        tail.position.set(0, 6, -30);
-        sealGroup.add(tail);
+        const flipperMaterial = sealMaterial.clone();
+        const flipperGeometry = new THREE.CapsuleGeometry(5, 16, 10, 18);
+        const leftFlipperPivot = new THREE.Group();
+        leftFlipperPivot.position.set(-20, -4, 0);
+        const leftFlipper = new THREE.Mesh(flipperGeometry, flipperMaterial);
+        leftFlipper.rotation.set(Math.PI / 2.2, 0, Math.PI / 8);
+        leftFlipper.castShadow = true;
+        leftFlipperPivot.add(leftFlipper);
+        sealGroup.add(leftFlipperPivot);
 
-        sealGroup.position.set(0, 12, 0);
+        const rightFlipperPivot = new THREE.Group();
+        rightFlipperPivot.position.set(20, -4, 0);
+        const rightFlipper = new THREE.Mesh(flipperGeometry, flipperMaterial);
+        rightFlipper.rotation.set(Math.PI / 2.2, 0, -Math.PI / 8);
+        rightFlipper.castShadow = true;
+        rightFlipperPivot.add(rightFlipper);
+        sealGroup.add(rightFlipperPivot);
+
+        const tailPivot = new THREE.Group();
+        tailPivot.position.set(0, -4, -38);
+        const tail = new THREE.Mesh(new THREE.ConeGeometry(12, 30, 22), sealMaterial);
+        tail.rotation.x = Math.PI / 1.6;
+        tail.castShadow = true;
+        tailPivot.add(tail);
+        sealGroup.add(tailPivot);
+
+        sealGroup.position.set(0, 6, 0);
+        sealGroup.castShadow = true;
         scene.add(sealGroup);
 
-        const bucketMaterial = new THREE.MeshPhongMaterial({ color: 0x30c563, shininess: 70 });
-        const bucketLipMaterial = new THREE.MeshPhongMaterial({ color: 0x8fffa2, emissive: 0x1e7d46, emissiveIntensity: 0.3 });
-        const bucketGroup = new THREE.Group();
+        const bucketMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x23d870,
+            roughness: 0.22,
+            metalness: 0.4,
+            clearcoat: 0.6,
+            emissive: 0x11b463,
+            emissiveIntensity: 0.25,
+        });
+        const rimMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x9affc9,
+            emissive: 0x2bff9d,
+            emissiveIntensity: 0.9,
+            roughness: 0.12,
+            clearcoat: 0.7,
+        });
 
-        const bucketBody = new THREE.Mesh(new THREE.CylinderGeometry(12, 14, 20, 32, 1, false), bucketMaterial);
-        bucketBody.position.y = 10;
+        const bucketGroup = new THREE.Group();
+        const bucketBody = new THREE.Mesh(new THREE.CylinderGeometry(12, 16, 22, 48, 1, false), bucketMaterial);
+        bucketBody.position.y = 14;
+        bucketBody.castShadow = true;
+        bucketBody.receiveShadow = true;
         bucketGroup.add(bucketBody);
 
-        const bucketRim = new THREE.Mesh(new THREE.TorusGeometry(12.5, 1.5, 12, 64), bucketLipMaterial);
+        const bucketRim = new THREE.Mesh(new THREE.TorusGeometry(13, 1.2, 18, 64), rimMaterial);
         bucketRim.rotation.x = Math.PI / 2;
-        bucketRim.position.y = 20;
+        bucketRim.position.y = 25;
         bucketGroup.add(bucketRim);
 
-        const handle = new THREE.Mesh(new THREE.TorusGeometry(14, 1.2, 10, 40, Math.PI), bucketLipMaterial);
-        handle.position.y = 22;
-        handle.rotation.x = Math.PI;
-        bucketGroup.add(handle);
+        const bucketHandle = new THREE.Mesh(new THREE.TorusGeometry(15, 0.9, 16, 50, Math.PI), rimMaterial);
+        bucketHandle.position.y = 26;
+        bucketHandle.rotation.x = Math.PI;
+        bucketGroup.add(bucketHandle);
 
-        bucketGroup.position.set(0, 5, -60);
+        const bucketGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(15, 32, 32),
+            new THREE.MeshBasicMaterial({ color: 0x5cff9b, transparent: true, opacity: 0.18 })
+        );
+        bucketGroup.add(bucketGlow);
+
+        const bucketSparkleGeometry = new THREE.BufferGeometry();
+        const sparkleCount = 60;
+        const sparklePositions = new Float32Array(sparkleCount * 3);
+        for (let i = 0; i < sparkleCount; i++) {
+            const angle = (i / sparkleCount) * Math.PI * 2;
+            const radius = 10 + Math.random() * 6;
+            sparklePositions[i * 3] = Math.cos(angle) * radius;
+            sparklePositions[i * 3 + 1] = 18 + Math.random() * 6;
+            sparklePositions[i * 3 + 2] = Math.sin(angle) * radius;
+        }
+        bucketSparkleGeometry.setAttribute("position", new THREE.BufferAttribute(sparklePositions, 3));
+        const bucketSparkles = new THREE.Points(
+            bucketSparkleGeometry,
+            new THREE.PointsMaterial({ color: 0xb8ffd8, size: 1.4, transparent: true, opacity: 0.85, depthWrite: false })
+        );
+        bucketGroup.add(bucketSparkles);
+
+        bucketGroup.position.set(0, 14, -120);
+        bucketGroup.castShadow = true;
         scene.add(bucketGroup);
 
+        const bucketLight = new THREE.PointLight(0x44ff9f, 2.6, 220, 2);
+        bucketLight.position.set(0, 38, -120);
+        bucketLight.castShadow = false;
+        scene.add(bucketLight);
+
         const playAreaHalfWidth = 260;
-        const playAreaHalfDepth = 170;
+        const playAreaHalfDepth = 180;
 
-        const movementKeys = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"]);
+        const sealState = {
+            position: new THREE.Vector3(0, 8, 0),
+            velocity: new THREE.Vector3(),
+            baseSpeed: 125,
+            accelResponse: 5.5,
+            drag: 0.6,
+        };
 
-        function getMovementKey(key) {
-            if (movementKeys.has(key)) {
-                return key;
-            }
+        const movementKeys = new Set([
+            "ArrowUp",
+            "ArrowDown",
+            "ArrowLeft",
+            "ArrowRight",
+            "w",
+            "a",
+            "s",
+            "d",
+        ]);
+
+        function normalizedMovementKey(key) {
+            if (movementKeys.has(key)) return key;
             const lower = key.toLowerCase();
             return movementKeys.has(lower) ? lower : null;
         }
-
-        const sealState = {
-            position: new THREE.Vector3(0, 12, 0),
-            velocity: new THREE.Vector3(),
-            accel: 95,
-            maxSpeed: 180,
-            drag: 0.8,
-        };
 
         let keys = new Set();
         let score = 0;
@@ -329,30 +667,47 @@
         let countdownAccumulator = 0;
         let gameRunning = false;
         let gameOver = false;
-        let lastTimestamp = performance.now();
+        let statusTimeout = null;
+
+        function refreshHud() {
+            scoreEl.textContent = score.toString();
+            bestEl.textContent = bestScore.toString();
+            timerEl.textContent = timer.toString().padStart(2, "0");
+        }
+
+        function flashStatus(message) {
+            statusToast.textContent = message;
+            statusToast.classList.add("show");
+            if (statusTimeout) {
+                clearTimeout(statusTimeout);
+            }
+            statusTimeout = setTimeout(() => {
+                statusToast.classList.remove("show");
+            }, 1600);
+        }
 
         function resizeRenderer() {
             const bounds = canvas.getBoundingClientRect();
-            const width = bounds.width * window.devicePixelRatio;
-            const height = bounds.height * window.devicePixelRatio;
-            if (canvas.width !== width || canvas.height !== height) {
-                renderer.setSize(bounds.width, bounds.height, false);
-                camera.aspect = bounds.width / bounds.height;
+            const width = bounds.width;
+            const height = bounds.height;
+            if (canvas.width !== width * window.devicePixelRatio || canvas.height !== height * window.devicePixelRatio) {
+                renderer.setSize(width, height, false);
+                camera.aspect = width / height;
                 camera.updateProjectionMatrix();
             }
         }
 
-        resizeRenderer();
         window.addEventListener("resize", resizeRenderer);
+        resizeRenderer();
 
         function setStartOverlayContent() {
-            overlayTitle.textContent = "Ready for a 3D swim?";
+            overlayTitle.textContent = "Dive when you're ready";
             overlayText.innerHTML =
-                'Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to glide the seal around the lagoon.<br />' +
-                "Swoop through the glowing green bucket to score points and earn extra time.";
+                'Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> or the arrow keys to swim. Hold <kbd>Shift</kbd> for a smooth dash.<br />' +
+                "Glide through the luminous bucket to score and extend your timer.";
             overlayHint.innerHTML =
-                "Press <kbd>Space</kbd>, <kbd>Enter</kbd>, or a movement key to dive in. Press <kbd>R</kbd> anytime to restart.";
-            startButton.textContent = "Start game";
+                "Tap <kbd>Space</kbd>, <kbd>Enter</kbd>, or any movement key to begin. Press <kbd>R</kbd> anytime for a fresh run.";
+            startButton.textContent = "Start the dive";
         }
 
         function showStartOverlay() {
@@ -365,14 +720,12 @@
             const bucketLabel = score === 1 ? "bucket" : "buckets";
             const bestLine =
                 bestScore > 0
-                    ? `Beat your best streak of <strong>${bestScore}</strong> next time!`
-                    : "You'll set a streak in your next swim!";
-            overlayTitle.textContent = "Time's up!";
-            overlayText.innerHTML =
-                `You collected <strong>${score}</strong> ${bucketLabel} this round.<br />` + bestLine;
-            overlayHint.innerHTML =
-                "Press <kbd>Space</kbd>, <kbd>Enter</kbd>, or <kbd>R</kbd> to play again.";
-            startButton.textContent = "Play again";
+                    ? `Best streak so far: <strong>${bestScore}</strong>. Can you top it?`
+                    : "Set your first streak with another dive.";
+            overlayTitle.textContent = "Time slipped away";
+            overlayText.innerHTML = `You scooped <strong>${score}</strong> ${bucketLabel} this run.<br />${bestLine}`;
+            overlayHint.innerHTML = "Press <kbd>Space</kbd>, <kbd>Enter</kbd>, or <kbd>R</kbd> to plunge back in.";
+            startButton.textContent = "Dive again";
             overlay.classList.remove("hidden");
             startButton.focus();
         }
@@ -382,105 +735,116 @@
         }
 
         function resetBucketPosition() {
-            const padding = 30;
+            const padding = 40;
             const x = randomInRange(-playAreaHalfWidth + padding, playAreaHalfWidth - padding);
             const z = randomInRange(-playAreaHalfDepth + padding, playAreaHalfDepth - padding);
-            bucketGroup.position.set(x, bucketGroup.position.y, z);
+            bucketGroup.position.set(x, 14, z);
         }
 
         function clampSealToBounds() {
-            sealState.position.x = Math.min(
-                playAreaHalfWidth,
-                Math.max(-playAreaHalfWidth, sealState.position.x)
-            );
-            sealState.position.z = Math.min(
-                playAreaHalfDepth,
-                Math.max(-playAreaHalfDepth, sealState.position.z)
-            );
+            sealState.position.x = Math.min(playAreaHalfWidth, Math.max(-playAreaHalfWidth, sealState.position.x));
+            sealState.position.z = Math.min(playAreaHalfDepth, Math.max(-playAreaHalfDepth, sealState.position.z));
         }
 
+        const headingQuaternion = new THREE.Quaternion();
+        const yAxis = new THREE.Vector3(0, 1, 0);
+        const cameraTarget = new THREE.Vector3();
+        const desiredCameraPosition = new THREE.Vector3();
+
         function updateMovement(deltaSeconds, elapsedSeconds) {
-            const accelVector = new THREE.Vector3();
             const right = keys.has("ArrowRight") || keys.has("d");
             const left = keys.has("ArrowLeft") || keys.has("a");
             const forward = keys.has("ArrowUp") || keys.has("w");
             const backward = keys.has("ArrowDown") || keys.has("s");
+            const dash = keys.has("Shift");
 
-            if (right) accelVector.x += 1;
-            if (left) accelVector.x -= 1;
-            if (forward) accelVector.z -= 1;
-            if (backward) accelVector.z += 1;
+            const inputVector = new THREE.Vector2();
+            if (right) inputVector.x += 1;
+            if (left) inputVector.x -= 1;
+            if (forward) inputVector.y -= 1;
+            if (backward) inputVector.y += 1;
 
-            if (accelVector.lengthSq() > 0) {
-                accelVector.normalize().multiplyScalar(sealState.accel * deltaSeconds);
-                sealState.velocity.add(accelVector);
+            if (inputVector.lengthSq() > 0) {
+                inputVector.normalize();
             }
 
-            const dragFactor = Math.pow(sealState.drag, deltaSeconds * 60);
-            sealState.velocity.multiplyScalar(dragFactor);
+            const targetSpeed = sealState.baseSpeed * (dash ? 1.35 : 1) * (1 + Math.min(score, 10) * 0.06);
+            const targetVelocity = new THREE.Vector3(inputVector.x, 0, inputVector.y);
+            targetVelocity.multiplyScalar(targetSpeed);
 
-            const speed = sealState.velocity.length();
-            const maxSpeed = sealState.maxSpeed * (1 + score * 0.06);
-            if (speed > maxSpeed) {
-                sealState.velocity.multiplyScalar(maxSpeed / speed);
+            const smoothing = 1 - Math.exp(-deltaSeconds * sealState.accelResponse);
+            sealState.velocity.lerp(targetVelocity, smoothing);
+            const damping = Math.exp(-deltaSeconds * sealState.drag);
+            sealState.velocity.multiplyScalar(damping);
+
+            if (sealState.velocity.lengthSq() < 1e-3) {
+                sealState.velocity.set(0, 0, 0);
             }
 
             sealState.position.addScaledVector(sealState.velocity, deltaSeconds);
             clampSealToBounds();
+
             sealGroup.position.set(
                 sealState.position.x,
-                12 + Math.sin(elapsedSeconds * 3) * 1.2,
+                6 + Math.sin(elapsedSeconds * 2.2) * 1.4,
                 sealState.position.z
             );
 
-            if (sealState.velocity.lengthSq() > 10) {
-                sealGroup.rotation.y = Math.atan2(sealState.velocity.x, sealState.velocity.z);
+            if (sealState.velocity.lengthSq() > 4) {
+                const heading = Math.atan2(sealState.velocity.x, -sealState.velocity.z);
+                headingQuaternion.setFromAxisAngle(yAxis, heading);
+                sealGroup.quaternion.slerp(headingQuaternion, 1 - Math.exp(-deltaSeconds * 8));
             }
+
+            const swimStrength = Math.min(sealState.velocity.length() / (sealState.baseSpeed * 1.4), 1);
+            const flipperSwing = Math.sin(elapsedSeconds * 6) * (0.4 + swimStrength * 0.5);
+            leftFlipperPivot.rotation.z = -0.6 + flipperSwing;
+            rightFlipperPivot.rotation.z = 0.6 - flipperSwing;
+            tailPivot.rotation.x = Math.PI / 1.6 + Math.sin(elapsedSeconds * 5.5) * 0.25 * swimStrength;
         }
 
         function checkBucketPickup() {
             const distance = sealGroup.position.distanceTo(bucketGroup.position);
-            const pickupRadius = 34;
+            const pickupRadius = 36;
             if (distance < pickupRadius) {
                 score += 1;
-                scoreEl.textContent = score.toString();
                 if (score > bestScore) {
                     bestScore = score;
-                    bestEl.textContent = bestScore.toString();
                 }
-                timer = Math.min(timer + 5, 90);
-                timerEl.textContent = timer.toString();
+                timer = Math.min(timer + 6, 95);
+                refreshHud();
+                flashStatus("Bucket secured! +6s to your dive.");
                 resetBucketPosition();
             }
         }
 
         function prepareForNewRound() {
             score = 0;
-            scoreEl.textContent = score.toString();
             timer = 60;
-            timerEl.textContent = timer.toString();
-            sealState.position.set(0, 12, 0);
+            refreshHud();
+            sealState.position.set(0, 8, 0);
             sealState.velocity.set(0, 0, 0);
+            sealGroup.position.set(0, 6, 0);
+            sealGroup.quaternion.identity();
             resetBucketPosition();
             countdownAccumulator = 0;
             keys.clear();
             gameOver = false;
-            lastTimestamp = performance.now();
         }
 
         function startRound() {
             prepareForNewRound();
-            gameRunning = true;
             overlay.classList.add("hidden");
-            setStartOverlayContent();
+            gameRunning = true;
+            flashStatus("Follow the glow to keep the streak alive!");
         }
 
         function triggerGameOver() {
-            if (gameOver) {
-                return;
-            }
+            if (gameOver) return;
             gameRunning = false;
             gameOver = true;
+            keys.clear();
+            flashStatus("Dive complete! Try for a longer streak.");
             showGameOverOverlay();
         }
 
@@ -504,7 +868,11 @@
                 return;
             }
 
-            const movementKey = getMovementKey(key);
+            if (key === "Shift") {
+                keys.add("Shift");
+            }
+
+            const movementKey = normalizedMovementKey(key);
             if (movementKey) {
                 if (!gameRunning) {
                     startRound();
@@ -515,61 +883,82 @@
         });
 
         window.addEventListener("keyup", (event) => {
-            const movementKey = getMovementKey(event.key);
+            const key = event.key;
+            if (key === "Shift") {
+                keys.delete("Shift");
+            }
+            const movementKey = normalizedMovementKey(key);
             if (movementKey) {
                 keys.delete(movementKey);
                 event.preventDefault();
             }
         });
 
-        function updateTimer(deltaMs) {
-            countdownAccumulator += deltaMs;
-            if (countdownAccumulator >= 1000) {
-                const secondsPassed = Math.floor(countdownAccumulator / 1000);
-                countdownAccumulator -= secondsPassed * 1000;
+        function updateTimer(deltaSeconds) {
+            countdownAccumulator += deltaSeconds;
+            if (countdownAccumulator >= 1) {
+                const secondsPassed = Math.floor(countdownAccumulator);
+                countdownAccumulator -= secondsPassed;
                 timer = Math.max(0, timer - secondsPassed);
-                timerEl.textContent = timer.toString();
+                timerEl.textContent = timer.toString().padStart(2, "0");
                 if (timer === 0) {
                     triggerGameOver();
                 }
             }
         }
 
-        function animate(timestamp) {
+        const clock = new THREE.Clock();
+
+        function animate() {
             requestAnimationFrame(animate);
-
             resizeRenderer();
+            const deltaSeconds = Math.min(clock.getDelta(), 0.12);
+            const elapsedSeconds = clock.elapsedTime;
 
-            const deltaMs = timestamp - lastTimestamp;
-            lastTimestamp = timestamp;
-            const deltaSeconds = Math.min(deltaMs / 1000, 0.1);
-            const elapsedSeconds = timestamp * 0.001;
+            water.material.uniforms["time"].value += deltaSeconds;
+            bucketGroup.position.y = 14 + Math.sin(elapsedSeconds * 2) * 1.5;
+            bucketGroup.rotation.y += deltaSeconds * 0.8;
+            bucketGlow.scale.setScalar(1.15 + Math.sin(elapsedSeconds * 3) * 0.08);
+            bucketSparkles.rotation.y -= deltaSeconds * 0.6;
+            bucketLight.position.copy(bucketGroup.position).add(new THREE.Vector3(0, 18, 0));
 
-            backgroundParticles.children.forEach((bubble, index) => {
-                bubble.position.y = 10 + Math.sin(timestamp * 0.001 + index) * 8;
-                bubble.position.x += Math.sin(timestamp * 0.0005 + index) * 0.1;
+            bubbleGroup.children.forEach((bubble, index) => {
+                bubble.position.y += deltaSeconds * 12 * (0.4 + (index % 5) * 0.1);
+                if (bubble.position.y > 60) {
+                    bubble.position.y = -6 - Math.random() * 10;
+                }
+                bubble.position.x += Math.sin(elapsedSeconds * 0.5 + index) * 0.04;
+                bubble.position.z += Math.cos(elapsedSeconds * 0.4 + index * 1.7) * 0.04;
             });
 
             if (gameRunning) {
-                updateTimer(deltaMs);
+                updateTimer(deltaSeconds);
                 updateMovement(deltaSeconds, elapsedSeconds);
                 checkBucketPickup();
             } else {
-                sealGroup.position.set(
-                    sealState.position.x,
-                    12 + Math.sin(elapsedSeconds * 3) * 1.2,
-                    sealState.position.z
-                );
+                sealGroup.position.y = 6 + Math.sin(elapsedSeconds * 2.2) * 1.2;
+                sealGroup.rotation.y = Math.sin(elapsedSeconds * 0.8) * 0.3;
+                leftFlipperPivot.rotation.z = -0.6 + Math.sin(elapsedSeconds * 2.4) * 0.2;
+                rightFlipperPivot.rotation.z = 0.6 - Math.sin(elapsedSeconds * 2.4) * 0.2;
+                tailPivot.rotation.x = Math.PI / 1.6 + Math.sin(elapsedSeconds * 2.8) * 0.12;
             }
 
-            bucketGroup.position.y = 8 + Math.sin(elapsedSeconds * 2) * 1.8;
+            cameraTarget.set(sealState.position.x, 6, sealState.position.z);
+            desiredCameraPosition.set(
+                sealState.position.x + sealState.velocity.x * 0.35,
+                68 + Math.sin(elapsedSeconds * 0.9) * 2,
+                sealState.position.z + 150 - sealState.velocity.z * 0.45
+            );
+            camera.position.lerp(desiredCameraPosition, 1 - Math.exp(-deltaSeconds * 2.4));
+            camera.lookAt(cameraTarget);
 
-            camera.lookAt(sealGroup.position.x, 0, sealGroup.position.z);
             renderer.render(scene, camera);
         }
 
         resetBucketPosition();
+        refreshHud();
         showStartOverlay();
+        clock.start();
         requestAnimationFrame(animate);
     </script>
 </body>
